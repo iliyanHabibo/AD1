@@ -15,21 +15,48 @@ HOST = sys.argv[2]
 PORT = int(sys.argv[3])
 
 # Programa principal
-
 def main():
     s = net_client.server_connection(HOST, PORT)
+    s.connect()
     while True:
-        command = input("Command: ")
-        s.connect()
-        #tenho que fazer check para ver se o comando é válido
-        s.send_receive(command)
+        command = input("comando > ")
+        args = command.split()
+
+            # Manipulate subscription timeout using time() function
+        if args[0] == 'SUBSCR':
+            try:
+                timeout = int(args[2])
+                args[2] = str(timeout + int(time.time()))
+            except ValueError:
+                print("INVALID-ARGUMENTS")
+                continue
+
+        # Check if command is valid
+        if args[0] not in ['SUBSCR', 'CANCEL', 'STATUS', 'INFOS', 'STATIS', 'STATIS ALL']:
+            print("UNKNOWN-COMMAND")
+            continue
+
+        # Check if required arguments are present
+        if args[0] == 'SUBSCR' and len(args) < 3:
+            print("MISSING-ARGUMENTS")
+            continue
+
+        elif args[0] in ['CANCEL', 'STATUS', 'INFOS', 'STATIS'] and len(args) < 2:
+            print("MISSING-ARGUMENTS")
+            continue
+
+        # Send command to server
+        response = s.send_receive(command)
+
+        # Print server response
+        print(response)
 
         if command == "exit":
             break
-            s.close()
 
-
-
+    # Disconnect from server
+    s.close()
 
 if __name__ == '__main__':
     main()
+
