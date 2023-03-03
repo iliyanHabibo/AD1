@@ -7,39 +7,77 @@ Números de aluno: 58654, 58626
 """
 
 # Zona para fazer importação
-
+import socket_utils
+import sys
+import time
 
 ###############################################################################
+#dicionario cuja chave é o id do recurso e o valor é o objeto resource
+resource_object = {}
+
 
 class resource:
     def __init__(self, resource_id):
         self.resource_id = resource_id
 
     def subscribe(self, client_id, time_limit):
-        pass # Remover esta linha e fazer implementação da função
+        if (self.resource_id, client_id) not in resource_time_limit.keys():
+            resource_client_list[self.resource_id].append(client_id)
+
+        #se o cliente já subscreveu o recurso, atualiza o tempo limite
+        #se o cliente não subscreveu o recurso, adiciona o par (id do recurso, id do cliente) ao dicionario
+        resource_time_limit[(self.resource_id, client_id)] = time_limit
 
     def unsubscribe (self, client_id):
-        pass # Remover esta linha e fazer implementação da função
+        #remove o cliente da lista de clientes que subscreveram o recurso
+        resource_client_list[self.resource_id].remove(client_id)
+
+        #remove o par (id do recurso, id do cliente) do dicionario
+        for key in resource_time_limit.keys():
+            if key[0] == self.resource_id and key[1] == client_id:
+                del resource_time_limit[key]
 
     def status(self, client_id):
-        pass # Remover esta linha e fazer implementação da função
+        if client_id in resource_client_list[self.resource_id]:
+            return "SUBSCRIBED"
+        else:
+            return "UNSUBSCRIBED"
    
     def __repr__(self):
         output = ""
+        output += "R " + str(self.resource_id) + " " + len(resource_client_list[self.resource_id]) + " "
+
+        # Acrescentar no output a lista de clientes que subscreveram o recurso
+        for client in resource_client_list[self.resource_id]:
+            output += str(client) + " "
+
         # R <resource_id> <list of subscribers>
         return output
 
 ###############################################################################
 
+
 class resource_pool:
     def __init__(self, N, K, M):
-        pass # Remover esta linha e fazer implementação da função
+        #N - numero max de subscritores por recurso
+        self.N = N
+        #K - numero max de recursos por cliente
+        self.K = K
+        #M - numero max de recursos
+        self.M = M
+        
         
     def clear_expired_subs(self):
-        pass # Remover esta linha e fazer implementação da função
+        #usar unsubscribe da classe resource para remover os clientes que expiraram
+        time_limit = int(time.time())
+        #percorrer o dicionario resource_time_limit e dar unsubscribe nos clientes que expiraram
+        for resource_id,client_id in resource_time_limit.keys():
+            if time_limit > resource_time_limit[(resource_id, client_id)]:
+                resource.unsubscribe(client_id)
 
     def subscribe(self, resource_id, client_id, time_limit):
-        pass # Remover esta linha e fazer implementação da função
+        recurso = resource(resource_id)
+        return recurso.subscribe(client_id, time_limit)
 
     def unsubscribe (self, resource_id, client_id):
         pass # Remover esta linha e fazer implementação da função
@@ -59,11 +97,15 @@ class resource_pool:
         return output
 
 ###############################################################################
+#dicionario cuja chave é o id do recurso e o valor é a lista de clientes que subscreveram
+resource_client_list = {}
+
+#dicionario cuja chave é o par (id do recurso, id do cliente) e o valor é o tempo limite
+resource_time_limit = {}
+
+
 
 # código do programa principal
-import socket_utils
-import sys
-
 HOST = sys.argv[1]
 PORT = int(sys.argv[2])
 M = int(sys.argv[3])
