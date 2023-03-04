@@ -12,7 +12,7 @@ import sys
 import time
 
 ###############################################################################
-#dicionario cuja chave é o id do recurso e o valor é o objeto resource
+# dicionario cuja chave é o id do recurso e o valor é o objeto resource
 resource_object = {}
 
 
@@ -24,15 +24,15 @@ class resource:
         if (self.resource_id, client_id) not in resource_time_limit.keys():
             resource_client_list[self.resource_id].append(client_id)
 
-        #se o cliente já subscreveu o recurso, atualiza o tempo limite
-        #se o cliente não subscreveu o recurso, adiciona o par (id do recurso, id do cliente) ao dicionario
+        # se o cliente já subscreveu o recurso, atualiza o tempo limite
+        # se o cliente não subscreveu o recurso, adiciona o par (id do recurso, id do cliente) ao dicionario
         resource_time_limit[(self.resource_id, client_id)] = time_limit
 
-    def unsubscribe (self, client_id):
-        #remove o cliente da lista de clientes que subscreveram o recurso
+    def unsubscribe(self, client_id):
+        # remove o cliente da lista de clientes que subscreveram o recurso
         resource_client_list[self.resource_id].remove(client_id)
 
-        #remove o par (id do recurso, id do cliente) do dicionario
+        # remove o par (id do recurso, id do cliente) do dicionario
         for key in resource_time_limit.keys():
             if key[0] == self.resource_id and key[1] == client_id:
                 del resource_time_limit[key]
@@ -42,10 +42,11 @@ class resource:
             return "SUBSCRIBED"
         else:
             return "UNSUBSCRIBED"
-   
+
     def __repr__(self):
         output = ""
-        output += "R " + str(self.resource_id) + " " + len(resource_client_list[self.resource_id]) + " "
+        output += "R " + str(self.resource_id) + " " + \
+            len(resource_client_list[self.resource_id]) + " "
 
         # Acrescentar no output a lista de clientes que subscreveram o recurso
         for client in resource_client_list[self.resource_id]:
@@ -59,19 +60,18 @@ class resource:
 
 class resource_pool:
     def __init__(self, N, K, M):
-        #N - numero max de subscritores por recurso
+        # N - numero max de subscritores por recurso
         self.N = N
-        #K - numero max de recursos por cliente
+        # K - numero max de recursos por cliente
         self.K = K
-        #M - numero max de recursos
+        # M - numero max de recursos
         self.M = M
-        
-        
+
     def clear_expired_subs(self):
-        #usar unsubscribe da classe resource para remover os clientes que expiraram
+        # usar unsubscribe da classe resource para remover os clientes que expiraram
         time_limit = int(time.time())
-        #percorrer o dicionario resource_time_limit e dar unsubscribe nos clientes que expiraram
-        for resource_id,client_id in resource_time_limit.keys():
+        # percorrer o dicionario resource_time_limit e dar unsubscribe nos clientes que expiraram
+        for resource_id, client_id in resource_time_limit.keys():
             if time_limit > resource_time_limit[(resource_id, client_id)]:
                 resource.unsubscribe(client_id)
 
@@ -79,30 +79,49 @@ class resource_pool:
         recurso = resource(resource_id)
         return recurso.subscribe(client_id, time_limit)
 
-    def unsubscribe (self, resource_id, client_id):
-        pass # Remover esta linha e fazer implementação da função
+    def unsubscribe(self, resource_id, client_id):
+        recurso = resource(resource_id)
+        return recurso.unsubscribe(client_id)
 
     def status(self, resource_id, client_id):
-        pass # Remover esta linha e fazer implementação da função
+        recurso = resource(resource_id)
+        return recurso.status(client_id)
 
     def infos(self, option, client_id):
-        pass # Remover esta linha e fazer implementação da função
+        if option == "M":
+            output = ""
+            for resource_id in resource_client_list.keys():
+                if client_id in resource_client_list[resource_id]:
+                    recurso = resource(resource_id)
+                    output += recurso.__repr__() + "    "
+            return output
+        elif option == "K":
+            return self.K - len(resource_client_list[resource_id])
 
     def statis(self, option, resource_id):
-        pass # Remover esta linha e fazer implementação da função
+        if option == "L":
+            return len(resource_client_list[resource_id])
+        elif option == "ALL":
+            output = ""
+            for resource_id in resource_client_list.keys():
+                recurso = resource(resource_id)
+                output += recurso.__repr__() + "    "
+            return output
+
+
+# não fiz esta
 
     def __repr__(self):
         output = ""
-        # Acrescentar no output uma linha por cada recurso
         return output
 
+
 ###############################################################################
-#dicionario cuja chave é o id do recurso e o valor é a lista de clientes que subscreveram
+# dicionario cuja chave é o id do recurso e o valor é a lista de clientes que subscreveram
 resource_client_list = {}
 
-#dicionario cuja chave é o par (id do recurso, id do cliente) e o valor é o tempo limite
+# dicionario cuja chave é o par (id do recurso, id do cliente) e o valor é o tempo limite
 resource_time_limit = {}
-
 
 
 # código do programa principal
@@ -115,9 +134,9 @@ N = int(sys.argv[5])
 
 def main():
     while True:
-        #tuple with socket and address
-        s= socket_utils.create_tcp_server_socket(HOST, PORT, 100)
-        msg = s[0].recv(1024)  #s[0] is the socket and s[1] is the address
+        # tuple with socket and address
+        s = socket_utils.create_tcp_server_socket(HOST, PORT, 100)
+        msg = s[0].recv(1024)  # s[0] is the socket and s[1] is the address
         print(msg.decode())
         resposta = "adeus"
         s[0].sendall(resposta.encode())
@@ -126,6 +145,7 @@ def main():
             break
 
         s[0].close()
+
 
 if __name__ == '__main__':
     main()
