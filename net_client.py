@@ -22,29 +22,32 @@ class server_connection:
         """
         self.address = address
         self.port = port
+        self.sock = None
 
     def connect(self):
         """
         Estabelece a ligação ao servidor especificado na inicialização.
         """
-        return socket_utils.create_tcp_client_socket(self.address, self.port)
-
+        self.sock = socket_utils.create_tcp_client_socket(self.address, self.port)
+        return self.sock
     def send_receive(self, data):
         """
         Envia os dados contidos em data para a socket da ligação, e retorna
         a resposta recebida pela mesma socket.
         """
-        s = self.connect()
-        s.sendall(data.encode())
-        data = s.recv(1024)
-        s.close()
-        return data.decode()
+        #s = self.connect()
+        #self.sendall(data.encode())
+        #data = socket_utils.receive_all(self,1024)
+        #return data.decode()
+        self.sock.sendall(data.encode())
+        data = socket_utils.receive_all(self.sock, 1024)
+        return data
     
     def close(self):
         """
         Termina a ligação ao servidor.
         """
-        self.close()
+        return self.sock.close()
         
 
 

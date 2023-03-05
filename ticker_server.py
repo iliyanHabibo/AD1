@@ -75,7 +75,8 @@ class resource_pool:
 
         #criar recursos e adicionar ao dicionario resource_object
         for i in range(1, M+1):
-            resource_object[i] = resource(i)    
+            resource_object[i] = resource(i)   
+
     def clear_expired_subs(self):
         # usar unsubscribe da classe resource para remover os clientes que expiraram
         time_limit = int(time.time())
@@ -144,9 +145,6 @@ K = int(sys.argv[4])
 #numero maximo de subscritores por recurso
 N = int(sys.argv[5])
 
-#criar objeto para resource_pool para usarmos no main
-resource_pool_object = resource_pool(N, K, M)
-
 #funcao auxiliar que conta o numero de recursos a que o cliente subscreveu
 def count_resources_client(client_id):
     count = 0
@@ -156,44 +154,52 @@ def count_resources_client(client_id):
     return count
 
 def main():
+    #criar objeto para resource_pool para usarmos no main
+    #ja cria os recursos
+    resource_pool_object = resource_pool(N, K, M)
+
+    print(resource_pool_object)
+
     # tuple with socket and address
     s = socket_utils.create_tcp_server_socket(HOST, PORT, 100)
-    msg = s[0].recv(1024)  # s[0] is the socket and s[1] is the address
-    msg = msg.decode()
-    msg = msg.split()
 
-    client_id = msg[1]
+    #recebe o id do cliente
+    client_id = int(socket_utils.receive_all(s[0],1024))    #s[0].recv(1024)  # s[0] is the socket and s[1] is the address
+        
+    #resposta a confirmar id do cliente
+    s[0].sendall("mensagem do servidor: O ID do cliente é {}".format(str(client_id)).encode())
 
     while True:
-        # tuple with socket and address
-        #s = socket_utils.create_tcp_server_socket(HOST, PORT, 100)
+        
+        #começa a receber os comandos
         msg = s[0].recv(1024)  # s[0] is the socket and s[1] is the address
         msg = msg.decode()
         args = msg.split()
-
+        print (args)
+        print (int(args[1]))
         if args[0] == "SUBSCR":
-            if args[1] not in resource_client_list.keys():
+            if int(args[1]) not in resource_client_list.keys():
                 resposta = "UNKNOWN RESOURCE"
             elif count_resources_client(client_id) >= K:
                 resposta = "NOK"
             elif len(resource_client_list[args[1]]) >= N:
                 resposta = "NOK"
             else:
-                resource_pool_object.subscribe(args[1], client_id, args[2])
+                resource_pool_object.subscribe(int(args[1]), client_id, int(args[2]))
                 resposta = "OK"
         elif args[0] == "CANCEL":
-            if args[1] not in resource_client_list.keys():
+            if int(args[1]) not in resource_client_list.keys():
                 resposta = "UNKNOWN RESOURCE"
-            elif client_id not in resource_client_list[args[1]]:
+            elif client_id not in resource_client_list[int(args[1])]:
                 resposta = "NOK"
             else:
-                resource_pool_object.unsubscribe(args[1], client_id)
+                resource_pool_object.unsubscribe(int(args[1]), client_id)
                 resposta = "OK"
         elif args[0] == "STATUS":
-            if args[1] not in resource_client_list.keys():
+            if int(args[1]) not in resource_client_list.keys():
                 resposta = "UNKNOWN RESOURCE"
             else:
-                resposta = resource_pool_object.status(args[1], client_id)
+                resposta = resource_pool_object.status(int(args[1]), client_id)
         elif args[0] == "INFOS":
             if args[1] == "M":
                 resposta = " ".join(resource_pool_object.infos(args[1], client_id))
@@ -214,8 +220,8 @@ def main():
 
         
 
-        #a cada segundo dar clear aos clientes que expiraram
-        resource_pool.clear_expired_subs()
+        #dar clear aos clientes que expiraram
+        resource_pool_object.clear_expired_subs()
 
     s[0].close()
 

@@ -22,18 +22,24 @@ PORT = int(sys.argv[3])
 def main():
     s = net_client.server_connection(HOST, PORT)
     s.connect()
+    #mandamos o ID do cliente ao servidor
+    client_id_received = s.send_receive(ID)
+    print(client_id_received)
+
+
     while True:
+        #pedimos o comando ao utilizador
         command = input("comando > ")
         args = command.split()
 
-        # Manipulate subscription timeout using time() function
-        # if args[0] == 'SUBSCR':
-        #     try:
-        #         timeout = int(args[2])
-        #         args[2] = str(timeout + int(time.time()))
-        #     except ValueError:
-        #         print("INVALID-ARGUMENTS")
-        #         continue
+        #Manipulate subscription timeout using time() function
+        if args[0] == 'SUBSCR':
+            try:
+                timeout = int(args[2])
+                args[2] = str(timeout + int(time.time()))
+            except ValueError:
+                print("INVALID-ARGUMENTS")
+                continue
 
         # Check if command is valid
         if args[0] not in ['SUBSCR', 'CANCEL', 'STATUS', 'INFOS', 'STATIS', 'STATIS ALL']:

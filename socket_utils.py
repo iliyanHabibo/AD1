@@ -71,9 +71,9 @@ def receive_all(socket, length):
     Excepções:
     socket.error - se ocorrer algum erro na recepção dos dados
     """
+    data = socket.recv(length)
+    #data = b''
+    #while len(data) < length:
+    #    data += socket.recv(length - len(data))
 
-    data = b''
-    while len(data) < length:
-        data += socket.recv(length - len(data))
-
-    return data
+    return data.decode()
