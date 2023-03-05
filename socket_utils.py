@@ -1,8 +1,14 @@
-#zona para imports
-import sys
+# -*- coding: utf-8 -*-
+"""
+Aplicações Distribuídas - Projeto 1 - socket_utils.py
+Grupo: 44
+Números de aluno: 58654, 58626 
+"""
+# zona para imports
 import socket as s
 
-#zona para classes
+# zona para classes
+
 
 def create_tcp_server_socket(address, port, queue_size):
     """
@@ -33,6 +39,7 @@ def create_tcp_server_socket(address, port, queue_size):
 
     return conn, addr
 
+
 def create_tcp_client_socket(address, port):
     """
     Função que cria um socket TCP e estabelece a ligação ao servidor especificado
@@ -57,6 +64,7 @@ def create_tcp_client_socket(address, port):
 
     return sock
 
+
 def receive_all(socket, length):
     """
     Função que recebe uma quantidade de dados específica de uma socket.
@@ -72,8 +80,5 @@ def receive_all(socket, length):
     socket.error - se ocorrer algum erro na recepção dos dados
     """
     data = socket.recv(length)
-    #data = b''
-    #while len(data) < length:
-    #    data += socket.recv(length - len(data))
 
     return data.decode()

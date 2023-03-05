@@ -6,7 +6,6 @@ Grupo: 44
 Números de aluno: 58654, 58626 
 """
 # Zona para fazer imports
-import socket_utils
 import sys
 import net_client
 import time
@@ -22,31 +21,23 @@ PORT = int(sys.argv[3])
 def main():
     s = net_client.server_connection(HOST, PORT)
     s.connect()
-    #mandamos o ID do cliente ao servidor
-    client_id_received = s.send_receive(ID)
-    print(client_id_received)
-
+    # mandamos o ID do cliente ao servidor
+    # client_id_received =
+    s.send_receive(ID)
 
     while True:
-        #pedimos o comando ao utilizador
+
+        # pedimos o comando ao utilizador
         command = input("comando > ")
         args = command.split()
+        print("ligado a localhost ")
 
-        #Manipulate subscription timeout using time() function
-        if args[0] == 'SUBSCR':
-            try:
-                timeout = int(args[2])
-                args[2] = str(timeout + int(time.time()))
-                
-            except ValueError:
-                print("INVALID-ARGUMENTS")
-                continue
-
-        # Check if command is valid
+        # verifica se o comando é válido
         if args[0] not in ['SUBSCR', 'CANCEL', 'STATUS', 'INFOS', 'STATIS', 'STATIS ALL', 'SLEEP', 'EXIT']:
             print("UNKNOWN-COMMAND")
             continue
 
+        # verifica se o comando tem o número correcto de argumentos
         if args[0] == 'SUBSCR':
             if len(args) < 3:
                 print("MISSING-ARGUMENTS")
@@ -57,37 +48,32 @@ def main():
             except ValueError:
                 print("INVALID-ARGUMENTS")
                 continue
-        
-        if args[0] == 'STATIS' and args[1] == 'L' and len (args) < 3:
+
+        if args[0] == 'STATIS' and args[1] == 'L' and len(args) < 3:
             print("MISSING-ARGUMENTS")
             continue
-
-        # # Check if required arguments are present
-        # if args[0] == 'SUBSCR' and len(args) < 3:
-        #     print("MISSING-ARGUMENTS")
-        #     continue
 
         elif args[0] in ['CANCEL', 'STATUS', 'INFOS', 'STATIS'] and len(args) < 2:
             print("MISSING-ARGUMENTS")
             continue
 
-        #sleep for number of seconds specified
+        # sleep durante o número de segundos especificado
         elif args[0] == 'SLEEP':
             time.sleep(int(args[1]))
             continue
 
-        # Send command to server
+        # enviar comando ao servidor
         response = s.send_receive(command)
 
-        # Print server response
+        # resposta do servidor de impressão
         print(response)
 
-        # Exit if command is EXIT
+        # Sair se o comando for EXIT
         if command == "EXIT":
             break
 
-
-    # Disconnect from server
+    print("ligacao terminada")
+    # desconecta do servidor
     s.close()
 
 
