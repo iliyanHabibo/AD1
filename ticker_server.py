@@ -14,32 +14,31 @@ import time
 ###############################################################################
 # dicionario cuja chave é o id do recurso e o valor é o objeto resource
 resource_object = {}
-
 # dicionario cuja chave é o id do recurso e o valor é a lista de clientes que subscreveram
 resource_client_list = {}
 
 # dicionario cuja chave é o par (id do recurso, id do cliente) e o valor é o tempo limite
 resource_time_limit = {}
 
-
 class resource:
     def __init__(self, resource_id):
         self.resource_id = resource_id
 
     def subscribe(self, client_id, time_limit):
-        if (self.resource_id, client_id) not in resource_time_limit.keys():
+        # se o cliente não subscreveu o recurso, adiciona o cliente à lista de clientes que subscreveram o recurso
+        if client_id not in resource_client_list[self.resource_id]:
             resource_client_list[self.resource_id].append(client_id)
 
         # se o cliente já subscreveu o recurso, atualiza o tempo limite
         # se o cliente não subscreveu o recurso, adiciona o par (id do recurso, id do cliente) ao dicionario
-        resource_time_limit[(self.resource_id, client_id)] = time_limit
-
+        resource_time_limit[(self.resource_id, client_id)] =time_limit + time.time()
+        
     def unsubscribe(self, client_id):
         # remove o cliente da lista de clientes que subscreveram o recurso
         resource_client_list[self.resource_id].remove(client_id)
 
         # remove o par (id do recurso, id do cliente) do dicionario
-        for key in resource_time_limit.keys():
+        for key in resource_time_limit.copy().keys():
             if key[0] == self.resource_id and key[1] == client_id:
                 del resource_time_limit[key]
 
@@ -74,16 +73,24 @@ class resource_pool:
         self.M = M
 
         #criar recursos e adicionar ao dicionario resource_object
-        for i in range(1, M+1):
+        #recursos vao de 0 a M-1
+        for i in range(0, M):
             resource_object[i] = resource(i)   
+
+        #criar listas de clientes vazias para o numero de recursos M e colocar no dicionario resource_client_list
+        for i in range(0, M):
+            resource_client_list[i] = []
 
     def clear_expired_subs(self):
         # usar unsubscribe da classe resource para remover os clientes que expiraram
         time_limit = int(time.time())
+        #print (time_limit)
+        #print (resource_time_limit[(resource_id, client_id)])
         # percorrer o dicionario resource_time_limit e dar unsubscribe nos clientes que expiraram
-        for resource_id, client_id in resource_time_limit.keys():
-            if time_limit > resource_time_limit[(resource_id, client_id)]:
-                resource.unsubscribe(client_id)
+        if len(resource_time_limit) > 0: 
+            for resource_id, client_id in resource_time_limit.copy().keys():
+                if time_limit > resource_time_limit[(resource_id, client_id)]:
+                    resource_object[resource_id].unsubscribe(client_id)
 
     def subscribe(self, resource_id, client_id, time_limit):
         return resource_object[resource_id].subscribe(client_id, time_limit)
@@ -95,13 +102,6 @@ class resource_pool:
         return resource_object[resource_id].status(client_id)
 
     def infos(self, option, client_id):
-        """
-        if option == "M":
-            output = ""
-            for resource_id in resource_object.keys():
-                if client_id in resource_client_list[resource_id]:
-                    output += resource_object[resource_id-1].__repr__() + "    "
-            return output"""
         #lista de recursos a que o cliente subscreveu
         lista_subscritos = []
         for resource_id in resource_client_list.keys():
@@ -112,18 +112,12 @@ class resource_pool:
         elif option == "K":
             return self.K - len(lista_subscritos)
 
-    def statis(self, option, resource_id):
+    def statis(self, option, resource_id = None):
         if option == "L":
             return len(resource_client_list[resource_id])
         elif option == "ALL":
             return repr(self)
-            """
-            output = ""
-            for resource_id in resource_client_list.keys():
-                recurso = resource(resource_id)
-                output += recurso.__repr__() + "    "
-            return output"""
-
+        
     def __repr__(self):
         output = ""
         for resource_id in resource_object.keys():
@@ -158,8 +152,6 @@ def main():
     #ja cria os recursos
     resource_pool_object = resource_pool(N, K, M)
 
-    print(resource_pool_object)
-
     # tuple with socket and address
     s = socket_utils.create_tcp_server_socket(HOST, PORT, 100)
 
@@ -171,21 +163,25 @@ def main():
 
     while True:
         
+        #mostrar info sobre ligaçao (HOST e PORT)
+        print("Ligado a HOST: " + str(s[1][0]) + " e PORT: " + str(s[1][1]))
         #começa a receber os comandos
         msg = s[0].recv(1024)  # s[0] is the socket and s[1] is the address
         msg = msg.decode()
         args = msg.split()
-        print (args)
-        print (int(args[1]))
+
+        #dar clear aos clientes que expiraram
+        resource_pool_object.clear_expired_subs()
         if args[0] == "SUBSCR":
-            if int(args[1]) not in resource_client_list.keys():
+            if int(args[1]) not in resource_object.keys():
                 resposta = "UNKNOWN RESOURCE"
             elif count_resources_client(client_id) >= K:
                 resposta = "NOK"
-            elif len(resource_client_list[args[1]]) >= N:
+            elif len(resource_client_list[int(args[1])]) >= N:
                 resposta = "NOK"
             else:
                 resource_pool_object.subscribe(int(args[1]), client_id, int(args[2]))
+                print (resource_client_list)
                 resposta = "OK"
         elif args[0] == "CANCEL":
             if int(args[1]) not in resource_client_list.keys():
@@ -202,14 +198,14 @@ def main():
                 resposta = resource_pool_object.status(int(args[1]), client_id)
         elif args[0] == "INFOS":
             if args[1] == "M":
-                resposta = " ".join(resource_pool_object.infos(args[1], client_id))
+                resposta = str(resource_pool_object.infos(str(args[1]), client_id))
             elif args[1] == "K":
                 resposta = str(resource_pool_object.infos(args[1], client_id))
         elif args[0] == "STATIS":
             if args[1] == "L":
-                resposta = str(resource_pool_object.statis(args[1], args[2]))
+                resposta = str(resource_pool_object.statis(args[1], int(args[2])))
             elif args[1] == "ALL":
-                resposta = resource_pool_object.statis(args[1], args[2])
+                resposta = resource_pool_object.statis(option = args[1])
         elif args[0] == "EXIT":
             break
         elif msg.decode() == "exit":
@@ -220,8 +216,7 @@ def main():
 
         
 
-        #dar clear aos clientes que expiraram
-        resource_pool_object.clear_expired_subs()
+        
 
     s[0].close()
 

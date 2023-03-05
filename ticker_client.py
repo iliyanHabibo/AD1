@@ -37,12 +37,13 @@ def main():
             try:
                 timeout = int(args[2])
                 args[2] = str(timeout + int(time.time()))
+                
             except ValueError:
                 print("INVALID-ARGUMENTS")
                 continue
 
         # Check if command is valid
-        if args[0] not in ['SUBSCR', 'CANCEL', 'STATUS', 'INFOS', 'STATIS', 'STATIS ALL']:
+        if args[0] not in ['SUBSCR', 'CANCEL', 'STATUS', 'INFOS', 'STATIS', 'STATIS ALL', 'SLEEP', 'EXIT']:
             print("UNKNOWN-COMMAND")
             continue
 
@@ -56,6 +57,10 @@ def main():
             except ValueError:
                 print("INVALID-ARGUMENTS")
                 continue
+        
+        if args[0] == 'STATIS' and args[1] == 'L' and len (args) < 3:
+            print("MISSING-ARGUMENTS")
+            continue
 
         # # Check if required arguments are present
         # if args[0] == 'SUBSCR' and len(args) < 3:
