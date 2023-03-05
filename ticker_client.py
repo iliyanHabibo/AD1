@@ -60,14 +60,21 @@ def main():
             print("MISSING-ARGUMENTS")
             continue
 
+        #sleep for number of seconds specified
+        elif args[0] == 'SLEEP':
+            time.sleep(int(args[1]))
+            continue
+
         # Send command to server
         response = s.send_receive(command)
 
         # Print server response
         print(response)
 
-        if command == "exit":
+        # Exit if command is EXIT
+        if command == "EXIT":
             break
+
 
     # Disconnect from server
     s.close()
